@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoPath AI — 几何证明辅导系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col selection:bg-blue-200">
+
+    <!-- 顶部导航栏 / Top Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo & Subtitle -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                        <i class="fa-solid fa-shapes text-xl"></i>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl font-bold text-slate-900 tracking-tight">GeoPath AI</span>
+                        <span class="text-xs text-slate-400 border-l border-slate-300 pl-2 font-normal hidden sm:inline-block" id="nav-subtitle">几何证明辅导系统</span>
+                    </div>
+                </div>
+
+                <!-- Right Action Navigation -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="goHome()" class="text-slate-600 hover:text-indigo-600 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 hover:bg-slate-50">
+                        <i class="fa-solid fa-compass text-slate-400"></i>
+                        <span id="nav-dashboard">学习仪表盘</span>
+                    </button>
+                    <button onclick="toggleVerifyModal(true)" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-3 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-clipboard-check text-indigo-600"></i>
+                        <span id="nav-verify">INT6065 项目验证</span>
+                    </button>
+                    <button onclick="toggleLanguage()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 border border-slate-200">
+                        <i class="fa-solid fa-globe text-slate-500"></i>
+                        <span id="lang-btn-text">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体容器 / Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ================= 首页视图：关卡与进度 Dashboard ================= -->
+        <div id="home-view" class="space-y-8 fade-in">
+            
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-blue-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-3xl space-y-4">
+                    <span id="hero-badge" class="bg-white/10 backdrop-blur-md text-indigo-200 text-xs font-semibold px-3 py-1 rounded-full border border-white/20 inline-block">
+                        支架式几何推理解题原型
+                    </span>
+                    <h1 id="hero-title" class="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                        循序渐进掌握平面几何证明
+                    </h1>
+                    <p id="hero-desc" class="text-indigo-100 text-sm sm:text-base leading-relaxed opacity-90 max-w-2xl">
+                        通过提示脚手架、辅助线策略可视化与交互式逻辑表达，逐步构建完整的几何推理链路。
+                    </p>
+                    <div class="pt-2 flex flex-wrap items-center gap-4">
+                        <button onclick="openQuestion(0)" class="bg-white text-indigo-900 hover:bg-indigo-50 px-6 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-black/10 transition-all flex items-center gap-2 transform active:scale-95">
+                            <i class="fa-solid fa-play text-indigo-600"></i>
+                            <span id="btn-start-learning">开始学习</span>
+                        </button>
+                        <span class="inline-flex items-center gap-2 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm">
+                            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                            <span id="hero-verified-tag">题目与图形已按几何条件校准</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- Decorative Graphic -->
+                <i class="fa-solid fa-shapes absolute -right-6 -bottom-10 text-9xl text-white/5 pointer-events-none transform -rotate-12"></i>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="flex items-center space-x-4 w-full sm:w-auto">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                        <i class="fa-solid fa-trophy text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" id="progress-title">总体学习进度</h3>
+                        <p class="text-xs text-slate-500 mt-0.5" id="progress-sub">共 4 个递进难度的几何推理关卡，查看参考证明后计为已学习</p>
+                    </div>
+                </div>
+                <div class="w-full sm:w-80 flex flex-col items-end gap-1.5">
+                    <div class="flex justify-between w-full text-xs font-semibold">
+                        <span class="text-slate-500" id="progress-count-text">0 / 4 已学习</span>
+                        <span class="text-indigo-600 font-bold" id="progress-pct">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-label="学习进度">
+                        <div id="progress-bar-inner" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Selection Grid -->
+            <div>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                        <span id="level-sec-title">选择难度等级</span>
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="level-cards-container">
+                    <!-- Cards will be populated by JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= 答题界面视图：交互式解题工作区 ================= -->
+        <div id="question-view" class="hidden space-y-6 fade-in">
+            <!-- Header Bar inside solver -->
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <button onclick="goHome()" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors flex items-center gap-2 text-sm font-semibold">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span id="btn-back-home">返回关卡列表</span>
+                    </button>
+                    <div class="h-5 w-px bg-slate-200"></div>
+                    <span id="q-level-badge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full border border-indigo-200">L1</span>
+                    <h2 id="q-title" class="text-base font-bold text-slate-800">题目标题</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="resetQuestion()" class="text-slate-600 hover:text-red-600 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 border border-slate-200 hover:bg-red-50">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span id="btn-reset">重置题目</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Panel: Problem Statement & Interactive SVG (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <!-- Statement -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                            <i class="fa-solid fa-file-lines text-indigo-500"></i>
+                            <span id="lbl-statement">原题描述</span>
+                        </h3>
+                        <p id="q-statement" class="text-slate-800 text-sm font-medium leading-relaxed"></p>
+                    </div>
+
+                    <!-- GeoGebra Diagram & Controls -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col items-center">
+                        <div class="w-full flex flex-wrap justify-between items-center gap-2 mb-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-draw-polygon text-indigo-500"></i>
+                                <span id="lbl-diagram">几何图形</span>
+                            </h3>
+                            <div class="flex flex-wrap items-center justify-end gap-2">
+                                <button id="btn-measure" onclick="toggleMeasurements()" aria-expanded="true" class="hidden bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                    <i class="fa-solid fa-ruler-combined mr-1"></i>
+                                    <span id="text-measure-btn">隐藏测量</span>
+                                </button>
+                                <button id="btn-aux" onclick="toggleAuxiliaryLine()" aria-expanded="false" class="hidden bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                    <i class="fa-solid fa-vector-square mr-1"></i>
+                                    <span id="text-aux-btn">显示辅助线</span>
+                                </button>
+                                <button id="btn-reset-geo" onclick="resetGeoView()" class="hidden bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                    <i class="fa-solid fa-arrows-rotate mr-1"></i>
+                                    <span id="text-reset-geo">重置图形</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- GeoGebra Box, with the original SVG kept as a fallback -->
+                        <div id="svg-container" role="group" aria-label="可交互几何图形" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 sm:p-4 flex flex-col items-center justify-center min-h-[320px] text-slate-800 shadow-inner overflow-hidden">
+                            <div id="ggb-container" class="hidden w-full"></div>
+                            <div id="svg-fallback" class="w-full"></div>
+                        </div>
+
+                        <!-- Live measurements -->
+                        <div id="geo-readout" class="hidden w-full mt-3 flex flex-wrap gap-2"></div>
+                        <p id="geo-status" class="w-full mt-2 text-[11px] text-slate-400 leading-relaxed"></p>
+
+                        <!-- Auxiliary Explanation -->
+                        <div id="aux-desc-box" class="hidden w-full mt-4 bg-indigo-50/80 border border-indigo-200 rounded-xl p-3.5 text-xs text-indigo-900 leading-relaxed">
+                            <span class="font-bold text-indigo-900 flex items-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+                                <span id="lbl-aux-purpose">辅助线作法与目的：</span>
+                            </span>
+                            <span id="aux-desc-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Given Conditions & Target -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <span class="text-xs font-bold text-emerald-700 mb-1.5 block flex items-center gap-1">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span id="lbl-given">已知条件</span>
+                            </span>
+                            <ul id="q-given-list" class="text-xs text-slate-700 space-y-1 list-disc list-inside font-medium"></ul>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <span class="text-xs font-bold text-indigo-700 mb-1.5 block flex items-center gap-1">
+                                <i class="fa-solid fa-bullseye"></i>
+                                <span id="lbl-target">求证目标</span>
+                            </span>
+                            <p id="q-target-text" class="text-xs text-slate-900 font-bold"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Hint Scaffold, Student Input & Verified Solution (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Hint Scaffold -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                                    <span id="lbl-hint-title">分步脚手架提示</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5" id="lbl-hint-sub">点击提示按钮逐步获取解题灵感</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3" id="hint-scaffold-container">
+                            <!-- Hint 1 -->
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-3">
+                                <button id="btn-hint-0" onclick="revealHint(0)" class="shrink-0 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-4 py-2 rounded-xl text-xs font-bold transition-all w-full sm:w-auto">
+                                    <span id="lbl-hint-btn-1">提示 1：观察特征</span>
+                                </button>
+                                <div id="box-hint-0" class="hidden bg-amber-50/60 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 flex-grow font-medium leading-relaxed"></div>
+                            </div>
+                            <!-- Hint 2 -->
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-3">
+                                <button id="btn-hint-1" onclick="revealHint(1)" disabled class="shrink-0 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span id="lbl-hint-btn-2">提示 2：关联定理</span>
+                                </button>
+                                <div id="box-hint-1" class="hidden bg-amber-50/60 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 flex-grow font-medium leading-relaxed"></div>
+                            </div>
+                            <!-- Hint 3 -->
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-3">
+                                <button id="btn-hint-2" onclick="revealHint(2)" disabled class="shrink-0 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span id="lbl-hint-btn-3">提示 3：关键突破</span>
+                                </button>
+                                <div id="box-hint-2" class="hidden bg-amber-50/60 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 flex-grow font-medium leading-relaxed"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Workspace -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <h3 class="text-xs font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-feather-pointed text-indigo-600"></i>
+                            <span id="lbl-workspace">我的推导草稿 / 步骤尝试</span>
+                        </h3>
+                        <textarea id="student-notes" rows="3" aria-label="我的推导草稿 / 步骤尝试" class="w-full p-3.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none text-xs text-slate-800 font-medium" placeholder="请在此简要写下你的思考过程、尝试证明的关键步骤..."></textarea>
+                        <p id="lbl-workspace-note" class="text-[11px] text-slate-400 mt-2">草稿仅作为你的思考记录，不会自动批改。</p>
+                        
+                        <div class="mt-3 flex justify-end">
+                            <button onclick="revealFullSolution()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-check-double text-emerald-400"></i>
+                                <span id="btn-show-solution">查看权威参考证明</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Solution & Analysis Section -->
+                    <div id="solution-panel" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-5 shadow-sm fade-in space-y-4">
+                        <div class="flex justify-between items-center border-b border-emerald-200/80 pb-3">
+                            <h3 class="font-bold text-emerald-950 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-square-check text-emerald-600"></i>
+                                <span id="lbl-solution-heading">分步标准证明</span>
+                            </h3>
+                            <span class="text-[11px] bg-emerald-200/80 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full" id="lbl-verified-badge">严谨核对无误</span>
+                        </div>
+
+                        <!-- Prerequisites Tags -->
+                        <div>
+                            <span class="text-xs font-bold text-emerald-800 block mb-1.5" id="lbl-prereqs">应用几何定理：</span>
+                            <div id="prereqs-tags" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+
+                        <!-- Step-by-Step Table -->
+                        <div class="overflow-x-auto rounded-xl border border-emerald-200 bg-white">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-emerald-100/60 text-emerald-900 border-b border-emerald-200 font-bold">
+                                        <th class="p-2.5 w-10 text-center">#</th>
+                                        <th class="p-2.5 border-r border-emerald-100 w-1/2" id="th-statement">推导过程 (Statement)</th>
+                                        <th class="p-2.5" id="th-reason">几何依据 (Reason)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="proof-table-body" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Strategy & Misconception -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                            <div class="bg-white p-3.5 rounded-xl border border-emerald-200 text-xs">
+                                <span class="font-bold text-emerald-800 block mb-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-key text-emerald-600"></i>
+                                    <span id="lbl-strategy-title">解题策略点拨</span>
+                                </span>
+                                <p id="text-strategy" class="text-slate-600 leading-relaxed"></p>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-xl border border-amber-200 text-xs">
+                                <span class="font-bold text-amber-800 block mb-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                                    <span id="lbl-misconception-title">常见认知误区</span>
+                                </span>
+                                <p id="text-misconception" class="text-slate-600 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- INT6065 Modal Audit Log -->
+    <div id="verify-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="verify-modal-title" onclick="if(event.target === this) toggleVerifyModal(false)" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 fade-in">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h3 id="verify-modal-title" class="text-lg font-bold text-slate-900">INT6065 教学技术项目验证报告</h3>
+                </div>
+                <button id="verify-modal-close" onclick="toggleVerifyModal(false)" aria-label="关闭" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <p id="verify-intro" class="font-semibold text-slate-800">本项目为 INT6065 Educational Technology 课程小组作业验证原型：</p>
+                <ul class="list-disc list-inside space-y-1.5 pl-1 text-slate-700">
+                    <li id="verify-item-1"><strong class="text-slate-900">脚手架教学法 (Scaffolded Learning)：</strong>采用认知层级递进式提示，鼓励学生先独立思考。</li>
+                    <li id="verify-item-2"><strong class="text-slate-900">严谨性校验 (Verification)：</strong>4 道题目均按初中几何知识点编写，图形中的点、线位置按题目条件校准，避免误导。</li>
+                    <li id="verify-item-3"><strong class="text-slate-900">动态几何 (Dynamic Geometry)：</strong>使用 GeoGebra 按题目条件构造图形，可拖动验证、实时测量，并切换辅助线。</li>
+                    <li id="verify-item-4"><strong class="text-slate-900">双语系统 (Bilingual System)：</strong>支持中文与英文教学情境切换。</li>
+                </ul>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button id="verify-close-btn" onclick="toggleVerifyModal(false)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors">
+                    关闭并继续练习
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Language State
+        let currentLang = 'zh';
+
+        // Verified Question Bank (4 Problems matching exact requirements)
+        const questionBank = [
+          {
+            id: "L1_Q1",
+            level: 1,
+            title_zh: "等级 1: 基础几何关系认知",
+            title_en: "Level 1: Geometric Relationship Recognition",
+            desc_zh: "识别已知条件、等腰三角形底角、对顶角及平行线同位角/内错角关系。",
+            desc_en: "Recognize givens, isosceles base angles, vertical angles, & parallel corresponding angles.",
+            statement_zh: "如图，点 A、D、B、E 在同一直线上，AD = BE，AC // DF，AC = DF。求证：BC = EF。",
+            statement_en: "As shown, points A, D, B, E lie on the same straight line, with AD = BE, AC // DF, and AC = DF. Prove that BC = EF.",
+            given_zh: ["A, D, B, E 四点共线", "AD = BE", "AC // DF", "AC = DF"],
+            given_en: ["Points A, D, B, E are collinear", "AD = BE", "AC // DF", "AC = DF"],
+            target_zh: "BC = EF",
+            target_en: "BC = EF",
+            prerequisites_zh: ["同位角相等", "等式加法性质", "SAS 全等判定"],
+            prerequisites_en: ["Corresponding Angles", "Addition Property", "SAS Congruence"],
+            hints_zh: [
+              "提示 1：观察线段 AD 和 BE，它们都加上中间线段 DB 后，能组成哪两组新线段？",
+              "提示 2：因为 AC // DF，根据平行线的性质，哪一对同位角相等？",
+              "提示 3：在 △ABC 和 △DEF 中，我们已有两组边及它们的夹角相等，可以使用什么判定定理？"
+            ],
+            hints_en: [
+              "Hint 1: Observe AD and BE. What new segments form when adding the shared segment DB to both?",
+              "Hint 2: Since AC // DF, which corresponding angles are equal?",
+              "Hint 3: In △ABC and △DEF, we have two pairs of equal sides and included angles. What congruence test applies?"
+            ],
+            hasAuxiliary: false,
+            auxiliaryDesc_zh: "本题无需添加辅助线，利用现有线段加减关系即可得出线段相等。",
+            auxiliaryDesc_en: "No auxiliary line is needed for this problem.",
+            strategy_zh: "线段转换与 SAS 直接全等判定",
+            strategy_en: "Segment transformation and SAS direct congruence",
+            misconception_zh: "容易误以为无需证明 AB = DE，而直接把 AD = BE 当成三角形的完整对应边。",
+            misconception_en: "Misassuming AD=BE are sides of the triangles directly without adding DB to form AB=DE.",
+            proofSteps: [
+              { step: 1, statement_zh: "∵ AD = BE", statement_en: "Since AD = BE", reason_zh: "已知条件", reason_en: "Given" },
+              { step: 2, statement_zh: "∴ AD + DB = BE + DB，即 AB = DE", statement_en: "AD + DB = BE + DB, so AB = DE", reason_zh: "等式性质", reason_en: "Property of Equality" },
+              { step: 3, statement_zh: "∵ AC // DF", statement_en: "Since AC // DF", reason_zh: "已知条件", reason_en: "Given" },
+              { step: 4, statement_zh: "∴ ∠A = ∠FDE", statement_en: "∠A = ∠FDE", reason_zh: "两直线平行，同位角相等", reason_en: "Parallel lines give equal corresponding angles" },
+              { step: 5, statement_zh: "在 △ABC 和 △DEF 中，AB=DE, ∠A=∠FDE, AC=DF", statement_en: "In △ABC & △DEF: AB=DE, ∠A=∠FDE, AC=DF", reason_zh: "已证与已知条件", reason_en: "Proven & Given" },
+              { step: 6, statement_zh: "∴ △ABC ≅ △DEF", statement_en: "∴ △ABC ≅ △DEF", reason_zh: "SAS 边角边全等判定", reason_en: "SAS Congruence Theorem" },
+              { step: 7, statement_zh: "∴ BC = EF", statement_en: "∴ BC = EF", reason_zh: "全等三角形对应边相等", reason_en: "Corresponding sides of congruent triangles" }
+            ],
+            // GeoGebra construction: A, B, C are draggable.
+            // D slides on AB, E = B + (D - A) keeps AD = BE, and F = D + (C - A) keeps AC = DF and AC // DF.
+            geoView: [-1, 9.5, -1, 5.5],
+            // (initial view tuned to the wide diagram panel)
+            geoReadouts: [
+              { type: "length", a: "A", b: "D", label: "AD" },
+              { type: "length", a: "B", b: "E", label: "BE" },
+              { type: "length", a: "A", b: "B", label: "AB" },
+              { type: "length", a: "A", b: "C", label: "AC" },
+              { type: "length", a: "D", b: "F", label: "DF" },
+              { type: "length", a: "B", b: "C", label: "BC" },
+              { type: "length", a: "E", b: "F", label: "EF" },
+              { type: "angle", a: "C", v: "A", c: "B", label: "∠CAB" },
+              { type: "angle", a: "F", v: "D", c: "E", label: "∠FDE" }
+            ],
+            geo: function(g, state) {
+              g.evalCommand("A=(0,0)");
+              g.evalCommand("B=(5,0)");
+              g.evalCommand("D=Point(Segment(A,B))");
+              g.evalCommand("E=B+(D-A)");
+              g.evalCommand("C=(1.2,3.6)");
+              g.evalCommand("F=D+(C-A)");
+              g.evalCommand("sAB=Segment(A,B)");
+              g.evalCommand("sAC=Segment(A,C)");
+              g.evalCommand("sBC=Segment(B,C)");
+              g.evalCommand("sDF=Segment(D,F)");
+              g.evalCommand("sEF=Segment(E,F)");
+              g.evalCommand("sDE=Segment(D,E)");
+              state.points.push("A", "B", "C", "D");
+              state.derived.push("E", "F");
+              state.segments.push("sAB", "sAC", "sDF", "sDE");
+              state.highlight.push("sBC", "sEF");
+              try { g.setCoords("D", 2, 0); } catch (err) {}
+            },
+            svg: function(showAux) {
+              return `<svg viewBox="0 0 420 230" class="w-full h-auto max-w-md mx-auto">
+                <line x1="40" y1="180" x2="380" y2="180" stroke="#334155" stroke-width="2.5"/>
+                <circle cx="40" cy="180" r="4" fill="#1e293b"/><text x="35" y="205" font-size="14" font-weight="bold" fill="#0f172a">A</text>
+                <circle cx="130" cy="180" r="4" fill="#1e293b"/><text x="125" y="205" font-size="14" font-weight="bold" fill="#0f172a">D</text>
+                <circle cx="270" cy="180" r="4" fill="#1e293b"/><text x="265" y="205" font-size="14" font-weight="bold" fill="#0f172a">B</text>
+                <circle cx="360" cy="180" r="4" fill="#1e293b"/><text x="355" y="205" font-size="14" font-weight="bold" fill="#0f172a">E</text>
+                <circle cx="220" cy="60" r="4" fill="#1e293b"/><text x="215" y="48" font-size="14" font-weight="bold" fill="#0f172a">C</text>
+                <circle cx="310" cy="60" r="4" fill="#1e293b"/><text x="315" y="48" font-size="14" font-weight="bold" fill="#0f172a">F</text>
+                <line x1="40" y1="180" x2="220" y2="60" stroke="#2563eb" stroke-width="2.5"/>
+                <line x1="270" y1="180" x2="220" y2="60" stroke="#2563eb" stroke-width="2.5"/>
+                <line x1="130" y1="180" x2="310" y2="60" stroke="#059669" stroke-width="2.5"/>
+                <line x1="360" y1="180" x2="310" y2="60" stroke="#059669" stroke-width="2.5"/>
+              </svg>`;
+            }
+          },
+          {
+            id: "L2_Q1",
+            level: 2,
+            title_zh: "等级 2: 几何定理综合应用",
+            title_en: "Level 2: Comprehensive Theorem Application",
+            desc_zh: "运用全等三角形(SAS/SSS/AAS)与相似判定定理证明线段或角相等。",
+            desc_en: "Apply triangle congruence (SAS/SSS/AAS) and similarity to prove segments or angles equal.",
+            statement_zh: "如图，在 △ABC 中，AB = AC，D, E 分别是 AB, AC 边的中点，连接 CD, BE。求证：CD = BE。",
+            statement_en: "In △ABC, AB = AC. D and E are the midpoints of AB and AC respectively. Prove that CD = BE.",
+            given_zh: ["AB = AC", "D 是 AB 中点", "E 是 AC 中点"],
+            given_en: ["AB = AC", "D is midpoint of AB", "E is midpoint of AC"],
+            target_zh: "CD = BE",
+            target_en: "CD = BE",
+            prerequisites_zh: ["中点定义", "等腰三角形性质", "SAS 全等判定"],
+            prerequisites_en: ["Midpoint Definition", "Isosceles Triangle Properties", "SAS Congruence"],
+            hints_zh: [
+              "提示 1：因为 D 和 E 分别是 AB 和 AC 的中点，且 AB = AC，线段 AD 和 AE 有什么关系？",
+              "提示 2：考虑包含 CD 和 BE 的一对三角形，例如 △ADC 与 △AEB，它们共享哪个顶点角？",
+              "提示 3：利用 SAS 证明 △ADC ≅ △AEB，即可得出 CD = BE。"
+            ],
+            hints_en: [
+              "Hint 1: Since D and E are midpoints and AB = AC, what is the relationship between AD and AE?",
+              "Hint 2: Consider triangles containing CD and BE, e.g., △ADC and △AEB. What shared angle do they have?",
+              "Hint 3: Prove △ADC ≅ △AEB using SAS to conclude CD = BE."
+            ],
+            hasAuxiliary: false,
+            auxiliaryDesc_zh: "无需辅助线，选择合适的重叠三角形即可证明。",
+            auxiliaryDesc_en: "No auxiliary line is required.",
+            strategy_zh: "寻找重叠全等三角形 (△ADC ≅ △AEB)",
+            strategy_en: "Identify overlapping congruent triangles",
+            misconception_zh: "容易看错对应顶点，或遗漏公共角 ∠A。",
+            misconception_en: "Confusing corresponding vertices or missing the shared vertex angle ∠A.",
+            proofSteps: [
+              { step: 1, statement_zh: "∵ D, E 分别是 AB, AC 中点", statement_en: "Since D, E are midpoints of AB, AC", reason_zh: "已知条件", reason_en: "Given" },
+              { step: 2, statement_zh: "∴ AD = 1/2 AB, AE = 1/2 AC", statement_en: "AD = 1/2 AB, AE = 1/2 AC", reason_zh: "中点定义", reason_en: "Midpoint Definition" },
+              { step: 3, statement_zh: "∵ AB = AC ∴ AD = AE", statement_en: "Since AB = AC, AD = AE", reason_zh: "等量代换", reason_en: "Substitution" },
+              { step: 4, statement_zh: "在 △ADC 与 △AEB 中，AD=AE, ∠A=∠A, AC=AB", statement_en: "In △ADC & △AEB: AD=AE, ∠A=∠A, AC=AB", reason_zh: "已证与公共角", reason_en: "Proven & Shared Angle" },
+              { step: 5, statement_zh: "∴ △ADC ≅ △AEB", statement_en: "∴ △ADC ≅ △AEB", reason_zh: "SAS 判定定理", reason_en: "SAS Congruence" },
+              { step: 6, statement_zh: "∴ CD = BE", statement_en: "∴ CD = BE", reason_zh: "全等三角形对应边相等", reason_en: "Corresponding sides equal" }
+            ],
+            // GeoGebra construction: C is constrained to the circle centred at A through B,
+            // so AB = AC is always true. D and E are the exact midpoints.
+            geoView: [-1, 11.5, 0.4, 7.2],
+            geoReadouts: [
+              { type: "length", a: "A", b: "B", label: "AB" },
+              { type: "length", a: "A", b: "C", label: "AC" },
+              { type: "length", a: "A", b: "D", label: "AD" },
+              { type: "length", a: "D", b: "B", label: "DB" },
+              { type: "length", a: "A", b: "E", label: "AE" },
+              { type: "length", a: "E", b: "C", label: "EC" },
+              { type: "length", a: "C", b: "D", label: "CD" },
+              { type: "length", a: "B", b: "E", label: "BE" },
+              { type: "angle", a: "B", v: "A", c: "C", label: "∠BAC" }
+            ],
+            geo: function(g, state) {
+              g.evalCommand("A=(3.5,6)");
+              g.evalCommand("B=(1.2,1.2)");
+              g.evalCommand("cAB=Circle(A,B)");
+              g.evalCommand("C=Point(cAB)");
+              g.evalCommand("D=Midpoint(A,B)");
+              g.evalCommand("E=Midpoint(A,C)");
+              g.evalCommand("sAB=Segment(A,B)");
+              g.evalCommand("sAC=Segment(A,C)");
+              g.evalCommand("sBC=Segment(B,C)");
+              g.evalCommand("sCD=Segment(C,D)");
+              g.evalCommand("sBE=Segment(B,E)");
+              state.points.push("A", "B", "C");
+              state.derived.push("D", "E");
+              state.segments.push("sAB", "sAC", "sBC");
+              state.highlight.push("sCD", "sBE");
+              state.hidden.push("cAB");
+              try { g.setCoords("C", 8.1095, 3.3387); } catch (err) {}
+            },
+            svg: function(showAux) {
+              return `<svg viewBox="0 0 400 270" class="w-full h-auto max-w-md mx-auto">
+                <polygon points="200,40 80,240 320,240" fill="none" stroke="#334155" stroke-width="2.5"/>
+                <circle cx="200" cy="40" r="4" fill="#1e293b"/><text x="195" y="28" font-size="14" font-weight="bold" fill="#0f172a">A</text>
+                <circle cx="80" cy="240" r="4" fill="#1e293b"/><text x="62" y="252" font-size="14" font-weight="bold" fill="#0f172a">B</text>
+                <circle cx="320" cy="240" r="4" fill="#1e293b"/><text x="328" y="252" font-size="14" font-weight="bold" fill="#0f172a">C</text>
+                <circle cx="140" cy="140" r="4" fill="#1e293b"/><text x="118" y="142" font-size="14" font-weight="bold" fill="#0f172a">D</text>
+                <circle cx="260" cy="140" r="4" fill="#1e293b"/><text x="272" y="142" font-size="14" font-weight="bold" fill="#0f172a">E</text>
+                <line x1="320" y1="240" x2="140" y2="140" stroke="#dc2626" stroke-width="2.5"/>
+                <line x1="80" y1="240" x2="260" y2="140" stroke="#2563eb" stroke-width="2.5"/>
+              </svg>`;
+            }
+          },
+          {
+            id: "L3_Q1",
+            level: 3,
+            title_zh: "等级 3: 辅助线作图策略",
+            title_en: "Level 3: Auxiliary-Line Construction Strategy",
+            desc_zh: "学会连接顶点、延长边或作平行线/垂线以揭示隐藏的全等关系。",
+            desc_en: "Learn to connect vertices, extend sides, or draw parallel/perpendicular lines to reveal hidden congruence.",
+            statement_zh: "已知 △ABC 中，AB = 5，AC = 3，AD 是 BC 的中线。求 AD 的取值范围。",
+            statement_en: "In △ABC, AB = 5, AC = 3, and AD is the median on BC. Find the range of AD.",
+            given_zh: ["AB = 5", "AC = 3", "AD 是 BC 的中线 (BD = CD)"],
+            given_en: ["AB = 5", "AC = 3", "AD is median on BC (BD = CD)"],
+            target_zh: "1 < AD < 4",
+            target_en: "1 < AD < 4",
+            prerequisites_zh: ["倍长中线法", "SAS 全等判定", "三角形三边关系"],
+            prerequisites_en: ["Doubling Median Strategy", "SAS Congruence", "Triangle Inequality"],
+            hints_zh: [
+              "提示 1：由于 AD 是中线，可以尝试构造‘倍长中线’：延长 AD 至点 E 使 DE = AD，并连接 BE。",
+              "提示 2：在 △ADC 和 △EDB 中，利用对顶角相等和中线性质，可以证明这两个三角形全等吗？",
+              "提示 3：全等后，AC 的长度转移到了 BE 上。现在在 △ABE 中使用三边关系定理（两边之差 < AE < 两边之和）求解。"
+            ],
+            hints_en: [
+              "Hint 1: Try the 'Doubling Median' strategy: Extend AD to E such that DE = AD, then connect BE.",
+              "Hint 2: Prove △ADC ≅ △EDB using vertical angles and midpoint properties.",
+              "Hint 3: Transfer AC to BE, then apply Triangle Inequality in △ABE."
+            ],
+            hasAuxiliary: true,
+            auxiliaryDesc_zh: "延长 AD 到点 E，使 DE = AD，连接 BE。通过倍长中线将分散的边 AC 转移到 △ABE 中。",
+            auxiliaryDesc_en: "Extend AD to E such that DE = AD, connect BE to transfer segment AC into △ABE.",
+            strategy_zh: "倍长中线转移边长 + 三角形三边关系",
+            strategy_en: "Double the median to transfer side length + Triangle Inequality",
+            misconception_zh: "误以为直接在 △ABD 中利用 5-BD < AD < 5+BD 求解（因为 BD 长度未知无法得出范围）。",
+            misconception_en: "Trying to apply inequality directly in △ABD without knowing BD length.",
+            proofSteps: [
+              { step: 1, statement_zh: "延长 AD 至 E 使 DE = AD，连接 BE", statement_en: "Extend AD to E such that DE = AD, connect BE", reason_zh: "辅助线作法", reason_en: "Auxiliary Line Construction" },
+              { step: 2, statement_zh: "∵ AD 是 BC 中线 ∴ BD = CD", statement_en: "Since AD is median, BD = CD", reason_zh: "中线定义", reason_en: "Median Definition" },
+              { step: 3, statement_zh: "在 △ADC 和 △EDB 中，AD=ED, ∠ADC=∠EDB, CD=BD", statement_en: "In △ADC & △EDB: AD=ED, ∠ADC=∠EDB, CD=BD", reason_zh: "作法与对顶角", reason_en: "Construction & Vertical Angles" },
+              { step: 4, statement_zh: "∴ △ADC ≅ △EDB", statement_en: "∴ △ADC ≅ △EDB", reason_zh: "SAS 判定", reason_en: "SAS Congruence" },
+              { step: 5, statement_zh: "∴ BE = AC = 3", statement_en: "∴ BE = AC = 3", reason_zh: "对应边相等", reason_en: "Corresponding sides equal" },
+              { step: 6, statement_zh: "在 △ABE 中，AB - BE < AE < AB + BE", statement_en: "In △ABE: AB - BE < AE < AB + BE", reason_zh: "三角形三边关系", reason_en: "Triangle Inequality Theorem" },
+              { step: 7, statement_zh: "即 5 - 3 < 2AD < 5 + 3 => 1 < AD < 4", statement_en: "2 < 2AD < 8 => 1 < AD < 4", reason_zh: "代入计算", reason_en: "Calculation" }
+            ],
+            // GeoGebra construction: B and C are constrained to circles of radius 5 and 3
+            // centred at A, so AB = 5 and AC = 3 always hold. D is the exact midpoint of BC,
+            // and E = Reflect(A, D) is the usual "double the median" construction.
+            geoView: [0, 10, 1.4, 8.2],
+            geoReadouts: [
+              { type: "length", a: "A", b: "B", label: "AB" },
+              { type: "length", a: "A", b: "C", label: "AC" },
+              { type: "length", a: "B", b: "D", label: "BD" },
+              { type: "length", a: "C", b: "D", label: "CD" },
+              { type: "length", a: "A", b: "D", label: "AD" },
+              { type: "length", a: "B", b: "E", label: "BE", aux: true },
+              { type: "length", a: "A", b: "E", label: "AE", aux: true }
+            ],
+            geo: function(g, state) {
+              g.evalCommand("A=(2,3)");
+              g.evalCommand("cB=Circle(A,5)");
+              g.evalCommand("B=Point(cB)");
+              g.evalCommand("cC=Circle(A,3)");
+              g.evalCommand("C=Point(cC)");
+              g.evalCommand("D=Midpoint(B,C)");
+              g.evalCommand("E=Reflect(A,D)");
+              g.evalCommand("sAB=Segment(A,B)");
+              g.evalCommand("sAC=Segment(A,C)");
+              g.evalCommand("sBC=Segment(B,C)");
+              g.evalCommand("sAD=Segment(A,D)");
+              g.evalCommand("sAE=Segment(A,E)");
+              g.evalCommand("sBE=Segment(B,E)");
+              state.points.push("A", "B", "C");
+              state.derived.push("D", "E");
+              state.segments.push("sAB", "sAC", "sBC");
+              state.highlight.push("sAD");
+              state.aux.push("E", "sAE", "sBE");
+              state.hidden.push("cB", "cC");
+              try { g.setCoords("B", 5, 7); } catch (err) {}
+              try { g.setCoords("C", 5, 3); } catch (err) {}
+            },
+            svg: function(showAux) {
+              let auxSvg = showAux ? `<g stroke-dasharray="5,5">
+                <line x1="190" y1="150" x2="120" y2="255" stroke="#2563eb" stroke-width="2.5"/>
+                <line x1="120" y1="150" x2="120" y2="255" stroke="#2563eb" stroke-width="2.5"/>
+                <circle cx="120" cy="255" r="4" fill="#2563eb"/>
+                <text x="95" y="265" font-size="14" font-weight="bold" fill="#2563eb">E</text>
+              </g>` : '';
+              return `<svg viewBox="0 0 380 300" class="w-full h-auto max-w-md mx-auto">
+                <polygon points="260,45 120,150 260,150" fill="none" stroke="#334155" stroke-width="2.5"/>
+                <circle cx="260" cy="45" r="4" fill="#1e293b"/><text x="265" y="32" font-size="14" font-weight="bold" fill="#0f172a">A</text>
+                <circle cx="120" cy="150" r="4" fill="#1e293b"/><text x="98" y="165" font-size="14" font-weight="bold" fill="#0f172a">B</text>
+                <circle cx="260" cy="150" r="4" fill="#1e293b"/><text x="268" y="168" font-size="14" font-weight="bold" fill="#0f172a">C</text>
+                <circle cx="190" cy="150" r="4" fill="#1e293b"/><text x="183" y="140" font-size="14" font-weight="bold" fill="#0f172a">D</text>
+                <line x1="260" y1="45" x2="190" y2="150" stroke="#dc2626" stroke-width="2.5"/>
+                ${auxSvg}
+              </svg>`;
+            }
+          },
+          {
+            id: "L4_Q1",
+            level: 4,
+            title_zh: "等级 4: 综合几何证明挑战",
+            title_en: "Level 4: Advanced Multi-Step Proof Challenge",
+            desc_zh: "结合旋转构造、等边三角形判定、勾股定理逆定理与辅助线的综合多步推导挑战。",
+            desc_en: "Complex multi-step proofs combining 60° rotation, equilateral triangle properties, the converse of the Pythagorean theorem, and auxiliary lines.",
+            statement_zh: "已知：△ABC 是正三角形，P 是三角形内一点，PA = 3，PB = 4，PC = 5。求 ∠APB 的度数。",
+            statement_en: "In equilateral △ABC, P is an interior point with PA = 3, PB = 4, PC = 5. Find ∠APB.",
+            given_zh: ["△ABC 是等边三角形", "PA = 3", "PB = 4", "PC = 5"],
+            given_en: ["△ABC is equilateral", "PA = 3", "PB = 4", "PC = 5"],
+            target_zh: "∠APB = 150°",
+            target_en: "∠APB = 150°",
+            prerequisites_zh: ["图形旋转性质", "等边三角形判定与性质", "勾股定理逆定理"],
+            prerequisites_en: ["Rotation Properties", "Equilateral Triangle Properties", "Converse of Pythagorean Theorem"],
+            hints_zh: [
+              "提示 1：PA, PB, PC 散落在点 P 四周，尝试将 △ABP 绕点 B 顺时针旋转 60° 得到 △CBQ。",
+              "提示 2：旋转后，BP 变为 BQ 且 ∠PBQ = 60°，说明 △BPQ 是什么特殊三角形？PQ 长度是多少？",
+              "提示 3：观察 △PQC 的三边长 (PQ=4, CQ=3, PC=5)，满足勾股定理逆定理吗？进而求出 ∠APB = ∠BQP + ∠PQC。"
+            ],
+            hints_en: [
+              "Hint 1: Rotate △ABP clockwise around point B by 60° to form △CBQ.",
+              "Hint 2: What triangle is △BPQ? What is PQ's length?",
+              "Hint 3: Check △PQC sides (4, 3, 5). Does it satisfy the Pythagorean Converse? Find ∠APB = ∠BQP + ∠PQC."
+            ],
+            hasAuxiliary: true,
+            auxiliaryDesc_zh: "将 △ABP 绕点 B 顺时针旋转 60° 得到 △CBQ，连接 PQ。",
+            auxiliaryDesc_en: "Rotate △ABP around B clockwise by 60° to △CBQ, connect PQ.",
+            strategy_zh: "旋转 60° 构造等边三角形与直角三角形",
+            strategy_en: "60° Rotation constructing equilateral & right-angled triangles",
+            misconception_zh: "误以为 P 是 △ABC 的外心或中心，从而无端假设 ∠APB = 120°。",
+            misconception_en: "Wrongly assuming P is the circumcenter/centroid and guessing ∠APB = 120°.",
+            proofSteps: [
+              { step: 1, statement_zh: "将 △ABP 绕点 B 顺时针旋转 60° 得到 △CBQ，连接 PQ", statement_en: "Rotate △ABP around B clockwise 60° to △CBQ, connect PQ", reason_zh: "辅助线作法", reason_en: "Auxiliary Construction" },
+              { step: 2, statement_zh: "∴ BQ=BP=4, CQ=AP=3, ∠PBQ=60°, ∠BQC=∠APB", statement_en: "BQ=BP=4, CQ=AP=3, ∠PBQ=60°, ∠BQC=∠APB", reason_zh: "旋转性质", reason_en: "Rotation Properties" },
+              { step: 3, statement_zh: "∵ BQ=BP 且 ∠PBQ=60° ∴ △BPQ 是等边三角形", statement_en: "BQ=BP & ∠PBQ=60° => △BPQ is equilateral", reason_zh: "等边三角形判定", reason_en: "Equilateral Triangle Test" },
+              { step: 4, statement_zh: "∴ ∠BQP = 60°, PQ = PB = 4", statement_en: "∠BQP = 60°, PQ = PB = 4", reason_zh: "等边三角形性质", reason_en: "Equilateral Properties" },
+              { step: 5, statement_zh: "在 △PQC 中，PQ=4, CQ=3, PC=5 且 3²+4²=5²", statement_en: "In △PQC: PQ=4, CQ=3, PC=5 and 3²+4²=5²", reason_zh: "代入已知数据", reason_en: "Substitution" },
+              { step: 6, statement_zh: "∴ ∠PQC = 90°", statement_en: "∴ ∠PQC = 90°", reason_zh: "勾股定理逆定理", reason_en: "Converse of Pythagorean Theorem" },
+              { step: 7, statement_zh: "∴ ∠APB = ∠BQC = ∠BQP + ∠PQC = 60° + 90° = 150°", statement_en: "∠APB = ∠BQC = 60° + 90° = 150°", reason_zh: "角的和差代换", reason_en: "Angle Addition" }
+            ],
+            // GeoGebra construction: the side length s is forced by PA=3, PB=4, PC=5.
+            // B moves on a circle of radius s around A, C is the 60° rotation of B,
+            // and P is placed on the ray from A at the angle required by triangle APB.
+            // Q is the 60° rotation of P about B, exactly matching the auxiliary-line proof.
+            geoView: [0, 10.5, 0.8, 8.6],
+            geoReadouts: [
+              { type: "length", a: "P", b: "A", label: "PA" },
+              { type: "length", a: "P", b: "B", label: "PB" },
+              { type: "length", a: "P", b: "C", label: "PC" },
+              { type: "angle", a: "A", v: "P", c: "B", label: "∠APB" },
+              { type: "length", a: "P", b: "Q", label: "PQ", aux: true },
+              { type: "length", a: "C", b: "Q", label: "CQ", aux: true },
+              { type: "length", a: "B", b: "Q", label: "BQ", aux: true },
+              { type: "angle", a: "P", v: "Q", c: "C", label: "∠PQC", aux: true },
+              { type: "angle", a: "P", v: "B", c: "Q", label: "∠PBQ", aux: true }
+            ],
+            geo: function(g, state) {
+              g.evalCommand("s=sqrt(25+12*sqrt(3))");
+              g.evalCommand("A=(2,2)");
+              g.evalCommand("cAB=Circle(A,s)");
+              g.evalCommand("B=Point(cAB)");
+              g.evalCommand("C=Rotate(B,pi/3,A)");
+              g.evalCommand("alpha=acos((s^2-7)/(6*s))");
+              g.evalCommand("Brot=Rotate(B,alpha,A)");
+              g.evalCommand("P=Dilate(Brot,3/s,A)");
+              g.evalCommand("Q=Rotate(P,-pi/3,B)");
+              g.evalCommand("sAB=Segment(A,B)");
+              g.evalCommand("sBC=Segment(B,C)");
+              g.evalCommand("sCA=Segment(C,A)");
+              g.evalCommand("sPA=Segment(P,A)");
+              g.evalCommand("sPB=Segment(P,B)");
+              g.evalCommand("sPC=Segment(P,C)");
+              g.evalCommand("sPQ=Segment(P,Q)");
+              g.evalCommand("sBQ=Segment(B,Q)");
+              g.evalCommand("sCQ=Segment(C,Q)");
+              state.points.push("A", "B");
+              state.derived.push("C", "P");
+              state.segments.push("sAB", "sBC", "sCA");
+              state.highlight.push("sPA", "sPB", "sPC");
+              state.aux.push("Q", "sPQ", "sBQ", "sCQ");
+              state.hidden.push("cAB", "s", "alpha", "Brot");
+              try { g.setCoords("B", 8.766432567, 2); } catch (err) {}
+            },
+            svg: function(showAux) {
+              let auxSvg = showAux ? `<g stroke-dasharray="5,5">
+                <circle cx="235.4" cy="116.3" r="4" fill="#2563eb"/>
+                <text x="245" y="112" font-size="14" font-weight="bold" fill="#2563eb">Q</text>
+                <line x1="276.8" y1="250" x2="235.4" y2="116.3" stroke="#2563eb" stroke-width="2"/>
+                <line x1="158.4" y1="44.9" x2="235.4" y2="116.3" stroke="#2563eb" stroke-width="2"/>
+                <line x1="140.3" y1="219" x2="235.4" y2="116.3" stroke="#2563eb" stroke-width="2"/>
+              </g>` : '';
+              return `<svg viewBox="0 0 400 280" class="w-full h-auto max-w-md mx-auto">
+                <polygon points="40,250 276.8,250 158.4,44.9" fill="none" stroke="#334155" stroke-width="2.5"/>
+                <circle cx="40" cy="250" r="4" fill="#1e293b"/><text x="28" y="270" font-size="14" font-weight="bold" fill="#0f172a">A</text>
+                <circle cx="276.8" cy="250" r="4" fill="#1e293b"/><text x="282" y="270" font-size="14" font-weight="bold" fill="#0f172a">B</text>
+                <circle cx="158.4" cy="44.9" r="4" fill="#1e293b"/><text x="152" y="32" font-size="14" font-weight="bold" fill="#0f172a">C</text>
+                <circle cx="140.3" cy="219" r="4" fill="#1e293b"/><text x="120" y="216" font-size="14" font-weight="bold" fill="#0f172a">P</text>
+                <line x1="40" y1="250" x2="140.3" y2="219" stroke="#dc2626" stroke-width="2"/>
+                <line x1="276.8" y1="250" x2="140.3" y2="219" stroke="#dc2626" stroke-width="2"/>
+                <line x1="158.4" y1="44.9" x2="140.3" y2="219" stroke="#dc2626" stroke-width="2"/>
+                ${auxSvg}
+              </svg>`;
+            }
+          }
+        ];
+
+        // State Tracking
+        let currentQIndex = 0;
+        let isAuxVisible = false;
+
+        // ---------------------------------------------------------------------
+        // GeoGebra integration
+        // ---------------------------------------------------------------------
+        const GGB_SCRIPT_URL = 'https://www.geogebra.org/apps/deployggb.js';
+        const GGB_CONTAINER_ID = 'ggb-container';
+
+        let ggbApplet = null;        // GGBApplet instance
+        let ggbApi = null;           // GeoGebra Apps API object
+        let ggbLoading = false;
+        let ggbFailed = false;
+        let ggbScriptPromise = null;
+        let geoRequested = false;
+        // Emergency switch: open the page with ?noggb=1 to use the original static SVG diagrams.
+        let geoDisabled = new URLSearchParams(window.location.search).has('noggb');
+        let isMeasureVisible = true;
+        let geoReadoutTimer = null;
+        let lastReadoutSignature = '';
+        let geoState = { points: [], derived: [], segments: [], highlight: [], aux: [], hidden: [] };
+
+        // Load the official deployggb.js once.
+        function loadGeoGebraScript() {
+          if (window.GGBApplet) return Promise.resolve();
+          if (ggbScriptPromise) return ggbScriptPromise;
+          ggbScriptPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = GGB_SCRIPT_URL;
+            script.async = true;
+            script.onload = () => {
+              if (typeof window.GGBApplet === 'function') resolve();
+              else reject(new Error('GGBApplet is not available'));
+            };
+            script.onerror = () => reject(new Error('Could not load deployggb.js'));
+            document.head.appendChild(script);
+          });
+          return ggbScriptPromise;
+        }
+
+        // Start loading GeoGebra if it is not ready yet.
+        function ensureGeoGebra() {
+          geoRequested = true;
+          if (geoDisabled) {
+            updateGeoStatus();
+            updateGeoButtons();
+            return;
+          }
+          if (ggbApi || ggbFailed || ggbLoading) {
+            updateGeoStatus();
+            return;
+          }
+          ggbLoading = true;
+          updateGeoStatus();
+          loadGeoGebraScript()
+            .then(() => { injectGeoGebra(); })
+            .catch((err) => {
+              console.error('GeoGebra loading failed:', err);
+              setGeoFailed();
+            });
+        }
+
+        function injectGeoGebra() {
+          const container = document.getElementById(GGB_CONTAINER_ID);
+          if (!container || typeof window.GGBApplet !== 'function') {
+            setGeoFailed();
+            return;
+          }
+          const parent = document.getElementById('svg-container');
+          let availableWidth = parent ? parent.clientWidth : 420;
+          if (parent) {
+            const cs = window.getComputedStyle(parent);
+            availableWidth -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 2;
+          }
+          const width = Math.max(280, Math.floor(availableWidth));
+          const height = Math.max(300, Math.min(430, Math.round(width * 0.78)));
+
+          container.innerHTML = '';
+          const params = {
+            id: 'ggbApplet',
+            width: width,
+            height: height,
+            appName: 'classic',
+            perspective: 'G',
+            showToolBar: false,
+            showAlgebraInput: false,
+            showMenuBar: false,
+            showResetIcon: false,
+            showZoomButtons: false,
+            showFullscreenButton: false,
+            showSuggestionButtons: false,
+            enableRightClick: false,
+            enableLabelDrags: false,
+            enableShiftDragZoom: true,
+            errorDialogsActive: false,
+            useBrowserForJS: true,
+            preventFocus: true,
+            language: currentLang === 'zh' ? 'zh' : 'en',
+            borderColor: '#e2e8f0',
+            appletOnLoad: function(api) { onGeoReady(api); }
+          };
+
+          try {
+            ggbApplet = new window.GGBApplet(params, '5.0', true);
+            ggbApplet.inject(GGB_CONTAINER_ID);
+          } catch (err) {
+            console.error('GeoGebra injection failed:', err);
+            setGeoFailed();
+          }
+        }
+
+        function onGeoReady(api) {
+          ggbApi = api;
+          ggbLoading = false;
+          ggbFailed = false;
+
+          const container = document.getElementById(GGB_CONTAINER_ID);
+          const fallback = document.getElementById('svg-fallback');
+          if (container) container.classList.remove('hidden');
+          if (fallback) fallback.classList.add('hidden');
+
+          try {
+            api.setAxesVisible(false, false);
+            api.setGridVisible(false);
+            api.setRounding('2');
+          } catch (err) {}
+
+          drawCurrentGeo();
+          resizeGeoApplet();
+          updateGeoButtons();
+          updateGeoStatus();
+          startReadoutTimer();
+        }
+
+        function setGeoFailed() {
+          ggbFailed = true;
+          ggbLoading = false;
+          ggbApi = null;
+          lastReadoutSignature = '';
+          if (geoReadoutTimer) {
+            clearInterval(geoReadoutTimer);
+            geoReadoutTimer = null;
+          }
+
+          const container = document.getElementById(GGB_CONTAINER_ID);
+          if (container) {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+          }
+          const fallback = document.getElementById('svg-fallback');
+          if (fallback) fallback.classList.remove('hidden');
+
+          const measureBtn = document.getElementById('btn-measure');
+          const resetBtn = document.getElementById('btn-reset-geo');
+          const readout = document.getElementById('geo-readout');
+          if (measureBtn) measureBtn.classList.add('hidden');
+          if (resetBtn) resetBtn.classList.add('hidden');
+          if (readout) readout.classList.add('hidden');
+          updateGeoStatus();
+        }
+
+        // Build the current question inside GeoGebra.
+        function drawCurrentGeo() {
+          if (!ggbApi) return false;
+          try {
+            ggbApi.newConstruction();
+            ggbApi.setAxesVisible(false, false);
+            ggbApi.setGridVisible(false);
+
+            geoState = { points: [], derived: [], segments: [], highlight: [], aux: [], hidden: [] };
+            const q = questionBank[currentQIndex];
+            if (typeof q.geo !== 'function') return false;
+            q.geo(ggbApi, geoState);
+
+            if (Array.isArray(q.geoView) && q.geoView.length === 4) {
+              ggbApi.setCoordSystem(q.geoView[0], q.geoView[1], q.geoView[2], q.geoView[3]);
+            }
+            ggbApi.setAxesVisible(false, false);
+            ggbApi.setGridVisible(false);
+
+            styleGeoObjects();
+            applyGeoVisibility();
+            lastReadoutSignature = '';
+            updateGeoReadouts();
+            return true;
+          } catch (err) {
+            console.error('GeoGebra construction failed:', err);
+            setGeoFailed();
+            return false;
+          }
+        }
+
+        function styleGeoObjects() {
+          if (!ggbApi) return;
+          const safe = (fn) => { try { fn(); } catch (err) {} };
+
+          geoState.points.forEach((name) => {
+            safe(() => ggbApi.setColor(name, 79, 70, 229));
+            safe(() => ggbApi.setPointSize(name, 6));
+            safe(() => ggbApi.setPointStyle(name, 0));
+            safe(() => ggbApi.setLabelStyle(name, 0));
+            safe(() => ggbApi.setLabelVisible(name, true));
+            safe(() => ggbApi.setLabelColor(name, 30, 41, 59));
+            safe(() => ggbApi.setFixed(name, false, false));
+          });
+
+          geoState.derived.forEach((name) => {
+            safe(() => ggbApi.setColor(name, 51, 65, 85));
+            safe(() => ggbApi.setPointSize(name, 5));
+            safe(() => ggbApi.setPointStyle(name, 0));
+            safe(() => ggbApi.setLabelStyle(name, 0));
+            safe(() => ggbApi.setLabelVisible(name, true));
+            safe(() => ggbApi.setLabelColor(name, 30, 41, 59));
+          });
+
+          geoState.segments.forEach((name) => {
+            safe(() => ggbApi.setColor(name, 51, 65, 85));
+            safe(() => ggbApi.setLineThickness(name, 3));
+            safe(() => ggbApi.setLineStyle(name, 0));
+            safe(() => ggbApi.setLabelVisible(name, false));
+          });
+
+          geoState.highlight.forEach((name) => {
+            safe(() => ggbApi.setColor(name, 220, 38, 38));
+            safe(() => ggbApi.setLineThickness(name, 3));
+            safe(() => ggbApi.setLabelVisible(name, false));
+          });
+
+          geoState.aux.forEach((name) => {
+            safe(() => {
+              const type = ggbApi.getObjectType(name);
+              if (type === 'point') {
+                ggbApi.setColor(name, 37, 99, 235);
+                ggbApi.setPointSize(name, 5);
+                ggbApi.setPointStyle(name, 0);
+                ggbApi.setLabelStyle(name, 0);
+                ggbApi.setLabelVisible(name, true);
+                ggbApi.setLabelColor(name, 30, 64, 175);
+              } else {
+                ggbApi.setColor(name, 37, 99, 235);
+                ggbApi.setLineThickness(name, 2);
+                ggbApi.setLineStyle(name, 1);
+                ggbApi.setLabelVisible(name, false);
+              }
+            });
+          });
+
+          geoState.hidden.forEach((name) => {
+            safe(() => ggbApi.setVisible(name, false));
+          });
+        }
+
+        function applyGeoVisibility() {
+          if (!ggbApi) return;
+          geoState.aux.forEach((name) => {
+            try { ggbApi.setVisible(name, isAuxVisible); } catch (err) {}
+          });
+        }
+
+        function toggleMeasurements() {
+          isMeasureVisible = !isMeasureVisible;
+          updateGeoButtons();
+          if (isMeasureVisible) updateGeoReadouts();
+          else {
+            const box = document.getElementById('geo-readout');
+            if (box) box.classList.add('hidden');
+          }
+        }
+
+        function resetGeoView() {
+          if (ggbApi) {
+            drawCurrentGeo();
+            updateGeoButtons();
+            updateGeoStatus();
+          } else {
+            renderDiagram();
+          }
+        }
+
+        function resizeGeoApplet() {
+          if (!ggbApi) return;
+          const container = document.getElementById(GGB_CONTAINER_ID);
+          if (!container || container.classList.contains('hidden')) return;
+          const width = Math.max(280, Math.floor(container.clientWidth || 0));
+          if (!width) return;
+          const height = Math.max(300, Math.min(430, Math.round(width * 0.78)));
+          try { ggbApi.setSize(width, height); } catch (err) {}
+        }
+
+        function startReadoutTimer() {
+          if (geoReadoutTimer) return;
+          geoReadoutTimer = setInterval(() => {
+            if (!ggbApi) return;
+            const view = document.getElementById('question-view');
+            if (view && !view.classList.contains('hidden')) updateGeoReadouts();
+          }, 250);
+        }
+
+        function geoPoint(name) {
+          if (!ggbApi) return null;
+          try {
+            if (typeof ggbApi.exists === 'function' && !ggbApi.exists(name)) return null;
+            const x = ggbApi.getXcoord(name);
+            const y = ggbApi.getYcoord(name);
+            if (!isFinite(x) || !isFinite(y)) return null;
+            return { x: x, y: y };
+          } catch (err) {
+            return null;
+          }
+        }
+
+        function distanceBetween(p1, p2) {
+          return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        }
+
+        function angleAt(p1, vertex, p2) {
+          const v1 = { x: p1.x - vertex.x, y: p1.y - vertex.y };
+          const v2 = { x: p2.x - vertex.x, y: p2.y - vertex.y };
+          const n1 = Math.hypot(v1.x, v1.y);
+          const n2 = Math.hypot(v2.x, v2.y);
+          if (!n1 || !n2) return NaN;
+          const cos = (v1.x * v2.x + v1.y * v2.y) / (n1 * n2);
+          return Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
+        }
+
+        function geoChip(label, value, tone) {
+          const cls = tone === 'aux'
+            ? 'bg-blue-50 text-blue-700 border-blue-200'
+            : 'bg-white text-slate-700 border-slate-200';
+          return `<span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${cls}"><span class="text-slate-500">${label}</span><span>=</span><span>${value}</span></span>`;
+        }
+
+        function updateGeoReadouts() {
+          const box = document.getElementById('geo-readout');
+          if (!box) return;
+          if (!ggbApi || !isMeasureVisible) {
+            box.classList.add('hidden');
+            lastReadoutSignature = '';
+            return;
+          }
+
+          const q = questionBank[currentQIndex];
+          const items = (q.geoReadouts || []).filter((item) => !item.aux || isAuxVisible);
+          const chips = items.map((item) => {
+            if (item.type === 'angle') {
+              const p1 = geoPoint(item.a);
+              const vertex = geoPoint(item.v);
+              const p2 = geoPoint(item.c);
+              if (!p1 || !vertex || !p2) return '';
+              const value = angleAt(p1, vertex, p2);
+              if (!isFinite(value)) return '';
+              return geoChip(item.label, value.toFixed(1) + '°', item.aux ? 'aux' : '');
+            }
+            const p1 = geoPoint(item.a);
+            const p2 = geoPoint(item.b);
+            if (!p1 || !p2) return '';
+            return geoChip(item.label, distanceBetween(p1, p2).toFixed(2), item.aux ? 'aux' : '');
+          }).filter(Boolean);
+
+          if (!chips.length) {
+            box.classList.add('hidden');
+            lastReadoutSignature = '';
+            return;
+          }
+
+          const signature = chips.join('|');
+          box.classList.remove('hidden');
+          if (signature !== lastReadoutSignature) {
+            box.innerHTML = chips.join('');
+            lastReadoutSignature = signature;
+          }
+        }
+
+        function updateGeoButtons() {
+          const ready = !!ggbApi;
+          const measureBtn = document.getElementById('btn-measure');
+          const resetBtn = document.getElementById('btn-reset-geo');
+          const measureText = document.getElementById('text-measure-btn');
+          const resetText = document.getElementById('text-reset-geo');
+
+          if (measureBtn) {
+            measureBtn.classList.toggle('hidden', !ready);
+            measureBtn.setAttribute('aria-expanded', isMeasureVisible ? 'true' : 'false');
+          }
+          if (resetBtn) resetBtn.classList.toggle('hidden', !ready);
+          if (measureText) {
+            measureText.innerText = isMeasureVisible
+              ? translate('textMeasureHide')
+              : translate('textMeasureShow');
+          }
+          if (resetText) resetText.innerText = translate('textResetGeo');
+        }
+
+        function updateGeoStatus() {
+          const status = document.getElementById('geo-status');
+          if (!status) return;
+
+          if (!geoRequested) {
+            status.innerText = '';
+            status.className = 'w-full mt-2 text-[11px] text-slate-400 leading-relaxed';
+            return;
+          }
+          if (geoDisabled) {
+            status.innerText = translate('geoDisabled');
+            status.className = 'w-full mt-2 text-[11px] text-slate-500 leading-relaxed';
+            return;
+          }
+          if (ggbFailed) {
+            status.innerText = translate('geoFailed');
+            status.className = 'w-full mt-2 text-[11px] text-amber-600 leading-relaxed';
+            return;
+          }
+          if (ggbLoading || !ggbApi) {
+            status.innerText = translate('geoLoading');
+            status.className = 'w-full mt-2 text-[11px] text-slate-400 leading-relaxed';
+            return;
+          }
+
+          const list = (geoState.points || []).join(currentLang === 'zh' ? '、' : ', ');
+          const dragText = list
+            ? ' ' + translate('geoDrag') + list + (currentLang === 'zh' ? '。' : '.')
+            : '';
+          status.innerText = translate('geoReady') + dragText + ' ' + translate('geoMeasureNote');
+          status.className = 'w-full mt-2 text-[11px] text-slate-400 leading-relaxed';
+        }
+
+        // UI Labels Translation Map
+        const i18n = {
+          zh: {
+            subtitle: "几何证明辅导系统",
+            navDashboard: "学习仪表盘",
+            navVerify: "INT6065 项目验证",
+            heroBadge: "支架式几何推理解题原型",
+            heroTitle: "循序渐进掌握平面几何证明",
+            heroDesc: "通过提示脚手架、辅助线策略可视化与交互式逻辑表达，逐步构建完整的几何推理链路。",
+            btnStartLearning: "开始学习",
+            btnContinueLearning: "继续学习",
+            verifiedTag: "题目与图形已按几何条件校准",
+            progressTitle: "总体学习进度",
+            progressSub: "共 4 个递进难度的几何推理关卡，查看参考证明后计为已学习",
+            progressCountTemplate: "{n} / 4 已学习",
+            levelSecTitle: "选择难度等级",
+            completedBadge: "已学习",
+            notStartedBadge: "未学习",
+            btnBackHome: "返回关卡列表",
+            btnReset: "重置题目",
+            lblStatement: "原题描述",
+            lblDiagram: "几何图形",
+            textAuxShow: "显示辅助线",
+            textAuxHide: "隐藏辅助线",
+            textMeasureShow: "显示测量",
+            textMeasureHide: "隐藏测量",
+            textResetGeo: "重置图形",
+            geoLoading: "正在加载 GeoGebra 动态图形…",
+            geoReady: "拖动彩色点可改变图形，已知条件会始终保持。",
+            geoDrag: "可拖动点：",
+            geoMeasureNote: "测量值仅用于观察，不能代替证明。",
+            geoFailed: "GeoGebra 未能加载，已显示静态图形。请检查网络连接后刷新页面。",
+            geoDisabled: "已通过网址参数关闭 GeoGebra，当前显示静态图形。去掉网址中的 ?noggb=1 即可恢复动态图形。",
+            lblAuxPurpose: "辅助线作法与目的：",
+            lblGiven: "已知条件",
+            lblTarget: "求证目标",
+            lblHintTitle: "分步脚手架提示",
+            lblHintSub: "点击提示按钮逐步获取解题灵感",
+            lblHint1Btn: "提示 1：观察特征",
+            lblHint2Btn: "提示 2：关联定理",
+            lblHint3Btn: "提示 3：关键突破",
+            lblWorkspace: "我的推导草稿 / 步骤尝试",
+            workspaceNote: "草稿仅作为你的思考记录，不会自动批改。",
+            btnShowSolution: "查看参考证明",
+            lblSolutionHeading: "分步标准证明",
+            lblVerifiedBadge: "严谨核对无误",
+            lblPrereqs: "应用几何定理：",
+            thStatement: "推导过程 (Statement)",
+            thReason: "几何依据 (Reason)",
+            lblStrategyTitle: "解题策略点拨",
+            lblMisconceptionTitle: "常见认知误区",
+            verifyTitle: "INT6065 教学技术项目验证报告",
+            verifyIntro: "本项目为 INT6065 Educational Technology 课程小组作业验证原型：",
+            verifyItem1: '<strong class="text-slate-900">脚手架教学法 (Scaffolded Learning)：</strong>采用认知层级递进式提示，鼓励学生先独立思考。',
+            verifyItem2: '<strong class="text-slate-900">严谨性校验 (Verification)：</strong>4 道题目均按初中几何知识点编写，图形中的点、线位置按题目条件校准，避免误导。',
+            verifyItem3: '<strong class="text-slate-900">动态几何 (Dynamic Geometry)：</strong>使用 GeoGebra 按题目条件构造图形，可拖动验证、实时测量，并切换辅助线。',
+            verifyItem4: '<strong class="text-slate-900">双语系统 (Bilingual System)：</strong>支持中文与英文教学情境切换。',
+            verifyClose: "关闭并继续练习"
+          },
+          en: {
+            subtitle: "Geometry Proof Tutor",
+            navDashboard: "Dashboard",
+            navVerify: "INT6065 Project Verification",
+            heroBadge: "Scaffolded Geometry Reasoning Prototype",
+            heroTitle: "Master Geometric Proofs Step by Step",
+            heroDesc: "Build complete geometric reasoning chains step by step through scaffolded hints, visual auxiliary lines, and interactive logic.",
+            btnStartLearning: "Start Learning",
+            btnContinueLearning: "Continue Learning",
+            verifiedTag: "Problems and diagrams calibrated to geometry conditions",
+            progressTitle: "Overall Progress",
+            progressSub: "4 progressive levels; viewing the reference proof marks a level as studied",
+            progressCountTemplate: "{n} / 4 studied",
+            levelSecTitle: "Select Difficulty Level",
+            completedBadge: "Studied",
+            notStartedBadge: "Not studied",
+            btnBackHome: "Back to Levels",
+            btnReset: "Reset Problem",
+            lblStatement: "Problem Statement",
+            lblDiagram: "Geometry Diagram",
+            textAuxShow: "Show Auxiliary Line",
+            textAuxHide: "Hide Auxiliary Line",
+            textMeasureShow: "Show Measurements",
+            textMeasureHide: "Hide Measurements",
+            textResetGeo: "Reset Figure",
+            geoLoading: "Loading the GeoGebra dynamic figure…",
+            geoReady: "Drag the colored points to change the figure; the given conditions always stay true.",
+            geoDrag: "Draggable points: ",
+            geoMeasureNote: "Measurements are for observation only and cannot replace a proof.",
+            geoFailed: "GeoGebra could not load, so the static diagram is shown. Check your network connection and refresh the page.",
+            geoDisabled: "GeoGebra is turned off by the URL parameter, so the static diagram is shown. Remove ?noggb=1 from the URL to restore the dynamic figure.",
+            lblAuxPurpose: "Auxiliary Line Strategy:",
+            lblGiven: "Given Conditions",
+            lblTarget: "Target to Prove",
+            lblHintTitle: "Scaffolded Hint System",
+            lblHintSub: "Click hints sequentially for step-by-step guidance",
+            lblHint1Btn: "Hint 1: Observe Facts",
+            lblHint2Btn: "Hint 2: Identify Theorem",
+            lblHint3Btn: "Hint 3: Key Strategy",
+            lblWorkspace: "My Reasoning Workspace",
+            workspaceNote: "This scratchpad is for your own thinking; it is not graded automatically.",
+            btnShowSolution: "Show Reference Proof",
+            lblSolutionHeading: "Reference Two-Column Proof",
+            lblVerifiedBadge: "Mathematically Verified",
+            lblPrereqs: "Prerequisites:",
+            thStatement: "Statement",
+            thReason: "Reason",
+            lblStrategyTitle: "Key Strategy",
+            lblMisconceptionTitle: "Common Misconception",
+            verifyTitle: "INT6065 Educational Technology Project Verification Report",
+            verifyIntro: "This project is a verification prototype for the INT6065 Educational Technology group assignment:",
+            verifyItem1: '<strong class="text-slate-900">Scaffolded Learning:</strong> Uses progressive cognitive hints and encourages students to think independently first.',
+            verifyItem2: '<strong class="text-slate-900">Verification:</strong> All 4 problems follow middle-school geometry topics, and diagram positions are calibrated to the given conditions to avoid visual misconceptions.',
+            verifyItem3: '<strong class="text-slate-900">Dynamic Geometry:</strong> Uses GeoGebra to construct figures from the given conditions, with draggable points, live measurements, and toggleable auxiliary lines.',
+            verifyItem4: '<strong class="text-slate-900">Bilingual System:</strong> Supports switching between Chinese and English instructional contexts.',
+            verifyClose: "Close and Continue"
+          }
+        };
+
+        // Initialize App
+        window.onload = () => {
+          renderDashboard();
+          updateUIReflection();
+        };
+
+        // Progress Tracking (localStorage)
+        const PROGRESS_KEY = 'geopath_progress_v1';
+
+        function loadProgress() {
+          try {
+            return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {};
+          } catch (e) {
+            return {};
+          }
+        }
+
+        function saveProgress(progress) {
+          try {
+            localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+          } catch (e) {
+            // localStorage may be unavailable; progress will simply not persist.
+          }
+        }
+
+        function markStudied(id) {
+          const progress = loadProgress();
+          if (!progress[id]) {
+            progress[id] = true;
+            saveProgress(progress);
+          }
+          updateProgressUI();
+        }
+
+        function updateProgressUI() {
+          const total = questionBank.length;
+          const progress = loadProgress();
+          const count = questionBank.filter(q => progress[q.id]).length;
+          const pct = total ? Math.round((count / total) * 100) : 0;
+          const countText = document.getElementById('progress-count-text');
+          const pctText = document.getElementById('progress-pct');
+          const barInner = document.getElementById('progress-bar-inner');
+          const track = barInner ? barInner.parentElement : null;
+
+          if (countText) countText.innerText = translate('progressCountTemplate').replace('{n}', count);
+          if (pctText) pctText.innerText = pct + '%';
+          if (barInner) barInner.style.width = pct + '%';
+          if (track) {
+            track.setAttribute('aria-valuenow', count);
+            track.setAttribute('aria-valuemax', total);
+            track.setAttribute('aria-label', translate('progressTitle'));
+          }
+        }
+
+        // Render Dashboard Level Cards
+        function renderDashboard() {
+          const container = document.getElementById('level-cards-container');
+          container.innerHTML = '';
+          const progress = loadProgress();
+
+          questionBank.forEach((q, index) => {
+            const isZh = currentLang === 'zh';
+            const studied = !!progress[q.id];
+            const badgeClass = studied
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-slate-50 text-slate-500 border border-slate-200";
+            const badgeText = studied ? translate('completedBadge') : translate('notStartedBadge');
+            const actionText = studied ? translate('btnContinueLearning') : translate('btnStartLearning');
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group";
+            
+            card.innerHTML = `
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-100">
+                    L${q.level}
+                  </span>
+                  <span class="${badgeClass} text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                    ${badgeText}
+                  </span>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base mb-2 group-hover:text-indigo-600 transition-colors">
+                  ${isZh ? q.title_zh : q.title_en}
+                </h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-6">
+                  ${isZh ? q.desc_zh : q.desc_en}
+                </p>
+              </div>
+              <button onclick="openQuestion(${index})" class="w-full bg-slate-50 group-hover:bg-indigo-600 text-slate-700 group-hover:text-white border border-slate-200 group-hover:border-indigo-600 rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                <span>${actionText}</span>
+              </button>
+            `;
+            container.appendChild(card);
+          });
+
+          updateProgressUI();
+        }
+
+        // Open Question View
+        // preserveState = true is used when switching language, so notes/hints/solution are kept.
+        function openQuestion(index, preserveState = false) {
+          const previousAux = isAuxVisible;
+          const revealedHints = preserveState
+            ? [0, 1, 2].map(i => !document.getElementById(`box-hint-${i}`).classList.contains('hidden'))
+            : [false, false, false];
+
+          currentQIndex = index;
+          isAuxVisible = preserveState ? previousAux : false;
+
+          const q = questionBank[index];
+          const isZh = currentLang === 'zh';
+
+          document.getElementById('home-view').classList.add('hidden');
+          document.getElementById('question-view').classList.remove('hidden');
+
+          document.getElementById('q-level-badge').innerText = `L${q.level}`;
+          document.getElementById('q-title').innerText = isZh ? q.title_zh : q.title_en;
+          document.getElementById('q-statement').innerText = isZh ? q.statement_zh : q.statement_en;
+
+          // Render Diagram (language switching keeps the current dragged construction)
+          renderDiagram({ rebuild: !preserveState });
+
+          // Aux line toggle visibility
+          const btnAux = document.getElementById('btn-aux');
+          const auxBox = document.getElementById('aux-desc-box');
+          if (q.hasAuxiliary) {
+            btnAux.classList.remove('hidden');
+            document.getElementById('aux-desc-text').innerText = isZh ? q.auxiliaryDesc_zh : q.auxiliaryDesc_en;
+            if (isAuxVisible) {
+              auxBox.classList.remove('hidden');
+            } else {
+              auxBox.classList.add('hidden');
+            }
+          } else {
+            btnAux.classList.add('hidden');
+            auxBox.classList.add('hidden');
+            isAuxVisible = false;
+          }
+          btnAux.setAttribute('aria-expanded', isAuxVisible ? 'true' : 'false');
+          document.getElementById('text-aux-btn').innerText = isAuxVisible ? translate('textAuxHide') : translate('textAuxShow');
+
+          // Given & Target
+          const givenUl = document.getElementById('q-given-list');
+          givenUl.innerHTML = '';
+          const givens = isZh ? q.given_zh : q.given_en;
+          givens.forEach(g => {
+            const li = document.createElement('li');
+            li.innerText = g;
+            givenUl.appendChild(li);
+          });
+          document.getElementById('q-target-text').innerText = isZh ? q.target_zh : q.target_en;
+
+          // Refresh hint text, then restore the previous revealed state (if preserving)
+          const hints = isZh ? q.hints_zh : q.hints_en;
+          for (let i = 0; i < 3; i++) {
+            document.getElementById(`box-hint-${i}`).innerText = hints[i];
+          }
+          applyHintState(revealedHints);
+
+          // Clear workspace & hide solution only when opening a question fresh
+          if (!preserveState) {
+            document.getElementById('student-notes').value = '';
+            document.getElementById('solution-panel').classList.add('hidden');
+          }
+
+          // Pre-populate solution
+          const prereqsBox = document.getElementById('prereqs-tags');
+          prereqsBox.innerHTML = '';
+          const prereqs = isZh ? q.prerequisites_zh : q.prerequisites_en;
+          prereqs.forEach(p => {
+            const tag = document.createElement('span');
+            tag.className = "px-2.5 py-1 bg-emerald-100 text-emerald-900 text-[11px] font-semibold rounded-lg border border-emerald-200";
+            tag.innerText = p;
+            prereqsBox.appendChild(tag);
+          });
+
+          const tableBody = document.getElementById('proof-table-body');
+          tableBody.innerHTML = '';
+          q.proofSteps.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50";
+            tr.innerHTML = `
+              <td class="p-2.5 text-center font-bold text-emerald-700">${s.step}</td>
+              <td class="p-2.5 border-r border-emerald-100 text-slate-800">${isZh ? s.statement_zh : s.statement_en}</td>
+              <td class="p-2.5 text-slate-600">${isZh ? s.reason_zh : s.reason_en}</td>
+            `;
+            tableBody.appendChild(tr);
+          });
+
+          document.getElementById('text-strategy').innerText = isZh ? q.strategy_zh : q.strategy_en;
+          document.getElementById('text-misconception').innerText = isZh ? q.misconception_zh : q.misconception_en;
+
+          // Start loading GeoGebra on first use; if it is already ready, renderDiagram rebuilt it.
+          ensureGeoGebra();
+          updateGeoButtons();
+          updateGeoStatus();
+
+          if (!preserveState) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+
+        // Apply hint visibility and button states
+        function applyHintState(revealed) {
+          let nextLocked = false;
+          for (let i = 0; i < 3; i++) {
+            const btn = document.getElementById(`btn-hint-${i}`);
+            const box = document.getElementById(`box-hint-${i}`);
+            btn.setAttribute('aria-expanded', revealed[i] ? 'true' : 'false');
+
+            if (revealed[i]) {
+              box.classList.remove('hidden');
+              btn.disabled = true;
+              btn.className = "shrink-0 bg-slate-100 text-slate-500 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold w-full sm:w-auto";
+            } else {
+              box.classList.add('hidden');
+              if (!nextLocked) {
+                btn.disabled = false;
+                btn.className = "shrink-0 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-4 py-2 rounded-xl text-xs font-bold transition-all w-full sm:w-auto";
+                nextLocked = true;
+              } else {
+                btn.disabled = true;
+                btn.className = "shrink-0 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed";
+              }
+            }
+          }
+        }
+
+        // Render Diagram
+        // rebuild = false only updates the auxiliary visibility, so dragged points stay where they are.
+        function renderDiagram(options = {}) {
+          const rebuild = options.rebuild !== false;
+          const q = questionBank[currentQIndex];
+          const fallback = document.getElementById('svg-fallback');
+          const container = document.getElementById(GGB_CONTAINER_ID);
+
+          if (fallback) fallback.innerHTML = q.svg(isAuxVisible);
+
+          if (ggbApi) {
+            if (container) container.classList.remove('hidden');
+            if (fallback) fallback.classList.add('hidden');
+            if (rebuild) drawCurrentGeo();
+            else {
+              applyGeoVisibility();
+              updateGeoReadouts();
+            }
+          } else {
+            if (container) container.classList.add('hidden');
+            if (fallback) fallback.classList.remove('hidden');
+            const readout = document.getElementById('geo-readout');
+            if (readout) readout.classList.add('hidden');
+          }
+
+          updateGeoButtons();
+          updateGeoStatus();
+          if (ggbApi) resizeGeoApplet();
+        }
+
+        // Toggle Auxiliary Line
+        function toggleAuxiliaryLine() {
+          isAuxVisible = !isAuxVisible;
+          renderDiagram({ rebuild: false });
+          document.getElementById('btn-aux').setAttribute('aria-expanded', isAuxVisible ? 'true' : 'false');
+
+          const auxBox = document.getElementById('aux-desc-box');
+          const auxBtnText = document.getElementById('text-aux-btn');
+
+          if (isAuxVisible) {
+            auxBox.classList.remove('hidden');
+            auxBtnText.innerText = translate('textAuxHide');
+          } else {
+            auxBox.classList.add('hidden');
+            auxBtnText.innerText = translate('textAuxShow');
+          }
+        }
+
+        // Reveal Hint
+        function revealHint(index) {
+          const revealed = [0, 1, 2].map(i => !document.getElementById(`box-hint-${i}`).classList.contains('hidden'));
+          revealed[index] = true;
+          applyHintState(revealed);
+          document.getElementById(`box-hint-${index}`).classList.add('fade-in');
+        }
+
+        // Show Full Solution
+        function revealFullSolution() {
+          markStudied(questionBank[currentQIndex].id);
+          const panel = document.getElementById('solution-panel');
+          panel.classList.remove('hidden');
+          setTimeout(() => {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+        }
+
+        // Reset Question
+        function resetQuestion() {
+          openQuestion(currentQIndex);
+        }
+
+        // Back to Dashboard
+        function goHome() {
+          document.getElementById('question-view').classList.add('hidden');
+          document.getElementById('home-view').classList.remove('hidden');
+          renderDashboard();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Toggle Verify Modal
+        function toggleVerifyModal(show) {
+          const modal = document.getElementById('verify-modal');
+          if (show) {
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+          } else {
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+          }
+        }
+
+        // Language Switcher
+        function toggleLanguage() {
+          currentLang = currentLang === 'zh' ? 'en' : 'zh';
+          document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+          document.getElementById('lang-btn-text').innerText = currentLang === 'zh' ? 'English' : '中文';
+          updateUIReflection();
+
+          if (!document.getElementById('question-view').classList.contains('hidden')) {
+            // Keep notes, revealed hints, auxiliary line, and solution state.
+            openQuestion(currentQIndex, true);
+          } else {
+            renderDashboard();
+          }
+        }
+
+        // Helper for Translation Lookup
+        function translate(key) {
+          return i18n[currentLang][key] || '';
+        }
+
+        // Update All Static Labels
+        function updateUIReflection() {
+          document.getElementById('nav-subtitle').innerText = translate('subtitle');
+          document.getElementById('nav-dashboard').innerText = translate('navDashboard');
+          document.getElementById('nav-verify').innerText = translate('navVerify');
+          document.getElementById('hero-badge').innerText = translate('heroBadge');
+          document.getElementById('hero-title').innerText = translate('heroTitle');
+          document.getElementById('hero-desc').innerText = translate('heroDesc');
+          document.getElementById('btn-start-learning').innerText = translate('btnStartLearning');
+          document.getElementById('hero-verified-tag').innerText = translate('verifiedTag');
+          document.getElementById('progress-title').innerText = translate('progressTitle');
+          document.getElementById('progress-sub').innerText = translate('progressSub');
+          updateProgressUI();
+          document.getElementById('level-sec-title').innerText = translate('levelSecTitle');
+
+          document.getElementById('btn-back-home').innerText = translate('btnBackHome');
+          document.getElementById('btn-reset').innerText = translate('btnReset');
+          document.getElementById('lbl-statement').innerText = translate('lblStatement');
+          document.getElementById('lbl-diagram').innerText = translate('lblDiagram');
+          document.getElementById('svg-container').setAttribute('aria-label', translate('lblDiagram'));
+          document.getElementById('text-aux-btn').innerText = isAuxVisible ? translate('textAuxHide') : translate('textAuxShow');
+          document.getElementById('lbl-aux-purpose').innerText = translate('lblAuxPurpose');
+          updateGeoButtons();
+          updateGeoReadouts();
+          updateGeoStatus();
+          document.getElementById('lbl-given').innerText = translate('lblGiven');
+          document.getElementById('lbl-target').innerText = translate('lblTarget');
+          document.getElementById('lbl-hint-title').innerText = translate('lblHintTitle');
+          document.getElementById('lbl-hint-sub').innerText = translate('lblHintSub');
+          document.getElementById('lbl-hint-btn-1').innerText = translate('lblHint1Btn');
+          document.getElementById('lbl-hint-btn-2').innerText = translate('lblHint2Btn');
+          document.getElementById('lbl-hint-btn-3').innerText = translate('lblHint3Btn');
+          document.getElementById('lbl-workspace').innerText = translate('lblWorkspace');
+          document.getElementById('lbl-workspace-note').innerText = translate('workspaceNote');
+          document.getElementById('student-notes').setAttribute('aria-label', translate('lblWorkspace'));
+          document.getElementById('btn-show-solution').innerText = translate('btnShowSolution');
+          document.getElementById('lbl-solution-heading').innerText = translate('lblSolutionHeading');
+          document.getElementById('lbl-verified-badge').innerText = translate('lblVerifiedBadge');
+          document.getElementById('lbl-prereqs').innerText = translate('lblPrereqs');
+          document.getElementById('th-statement').innerText = translate('thStatement');
+          document.getElementById('th-reason').innerText = translate('thReason');
+          document.getElementById('lbl-strategy-title').innerText = translate('lblStrategyTitle');
+          document.getElementById('lbl-misconception-title').innerText = translate('lblMisconceptionTitle');
+
+          // Verification modal
+          document.getElementById('verify-modal-title').innerText = translate('verifyTitle');
+          document.getElementById('verify-intro').innerText = translate('verifyIntro');
+          document.getElementById('verify-item-1').innerHTML = translate('verifyItem1');
+          document.getElementById('verify-item-2').innerHTML = translate('verifyItem2');
+          document.getElementById('verify-item-3').innerHTML = translate('verifyItem3');
+          document.getElementById('verify-item-4').innerHTML = translate('verifyItem4');
+          document.getElementById('verify-close-btn').innerText = translate('verifyClose');
+          document.getElementById('verify-modal-close').setAttribute('aria-label', translate('verifyClose'));
+        }
+
+        // Close the verification modal with Escape
+        window.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            const modal = document.getElementById('verify-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+              toggleVerifyModal(false);
+            }
+          }
+        });
+
+        // Keep the applet sized to its container
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(resizeGeoApplet, 150);
+        });
+    </script>
+</body>
+</html>
